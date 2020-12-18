@@ -1,0 +1,72 @@
+import React, { Component } from 'react';
+
+class Themes extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            themesName: [],
+            selectedTheme: null
+        }
+    }
+
+    componentDidMount() {
+        fetch('/themes').then(r => r.json()).then(themesName => this.setState({ themesName }));
+        if (document.cookie) {
+            const pair = document.cookie.split('=')
+            // [theme, ligth]
+            const themeName = pair[1];
+            this.handleThemeChanged(themeName);
+        } else {
+            this.handleThemeChanged("none");
+        }
+    }
+
+    handleThemeChanged(newTheme) {
+        fetch('/themes', {
+            method: 'POST',
+            body: JSON.stringify({ themeName: newTheme }),
+            headers: {
+                "Content-Type": "application/json",
+            }
+        }).then(r => r.json())
+            .then(selectedTheme => this.setState({ selectedTheme }));
+    }
+
+    clearCookie(){
+        fetch('themes-cookie', {method: 'DELETE'});
+        document.getElementById("clear-cookie").innerHTML= "Now the cookie is clear";
+        window.location.reload(false);
+    }
+
+    render() {
+        const { themesName, selectedTheme } = this.state;
+        if (themesName.length === 0) {
+            return <h2>Loading...</h2>
+        }
+
+        console.log(selectedTheme);
+        if (selectedTheme === null) {
+            return <h2>Loading...</h2>
+        }
+
+        const divStyle = {
+            color: selectedTheme.color,
+            background: selectedTheme.background,
+            height: selectedTheme.height
+        }
+
+        return (
+            <div style={divStyle}>
+                <h2>Select Themes</h2>
+                <h3 id='clear-cookie'></h3>
+                <select onChange={(event) => this.handleThemeChanged(event.target.value)}>
+                    {/* <option value="none">select color</option> */}
+                    {themesName.map(theme => <option key={theme} value={theme}>{theme}</option>)}
+                </select>
+                <button onClick={()=>this.clearCookie()}>Clear Cookie</button>
+            </div>
+        );
+    }
+}
+
+export default Themes;
